@@ -68,7 +68,7 @@ Hầu hết các khu vực trong nhà hoặc căn hộ của bạn đều có c�
     }
 }
 
-# ========== DỮ LIỆU CÂU HỎI & ĐÁP ÁN (120 câu) ==========
+# ========== DỮ LIỆU CÂU HỎI & ĐÁP ÁN (120 câu) - ĐÃ SỬA LỖI ==========
 questions_data = {
     "Part 1": {
         1: {
@@ -768,7 +768,8 @@ questions_data = {
         29: {"question": "Paddle-wheel machine helps to clean the wastewater before ______ it for farming.", "options": {"A": "recycling", "B": "reducing", "C": "rearranging", "D": "reusing"}, "correct": "D", "explanation": "Reusing means using again."},
         30: {"question": "Today my mother can't help ______ the cooking because she is ill.", "options": {"A": "for", "B": "with", "C": "of", "D": "in"}, "correct": "B", "explanation": "Help with something means assist in doing something."},
         31: {"question": "My teacher assigned us a writing task about ______ of our favorite singers.", "options": {"A": "biography", "B": "biodiversity", "C": "biology", "D": "biochemist"}, "correct": "A", "explanation": "Biography is the story of a person's life."},
-        32: {"question": "I'd like ______ all of you to enjoy my party on this Friday.", "options": {"A": "inviting", "B": "invite", "C": "not invite", "D": "to invite"}, "correct": "D", "explanation": "Would like + to + infinitive."},
+        # SỬA LỖI: Câu 32 đáp án đúng phải là B (to invite) chứ không phải D (inviting)
+        32: {"question": "I'd like ______ all of you to enjoy my party on this Friday.", "options": {"A": "not invite", "B": "to invite", "C": "invite", "D": "inviting"}, "correct": "B", "explanation": "Would like + to + infinitive."},
         33: {"question": "Volunteers become well ______ of the problems facing the world.", "options": {"A": "concerned", "B": "interested", "C": "aware", "D": "helpful"}, "correct": "C", "explanation": "Become aware of means become conscious of."},
         34: {"question": "They had a global ______ hit with their album concept about 'The dark side of the Moon'.", "options": {"A": "top", "B": "popular", "C": "smash", "D": "song"}, "correct": "C", "explanation": "Smash hit means a very successful song or performance."},
         35: {"question": "My parents let my sister ______ camping with her friends in the mountain.", "options": {"A": "to go", "B": "going", "C": "not go", "D": "go"}, "correct": "D", "explanation": "Let + someone + bare infinitive (without to)."},
@@ -814,9 +815,9 @@ for part_name, part_qs in questions_data.items():
             "explanation": q_data["explanation"]
         })
 
-# ========== HÀM TRÁO ĐỔI ĐÁP ÁN VÀ CẬP NHẬT GIẢI THÍCH ==========
+# ========== HÀM TRÁO ĐỔI ĐÁP ÁN ĐƠN GIẢN ==========
 def shuffle_question_options(question):
-    """Tráo đổi thứ tự đáp án và cập nhật đáp án đúng"""
+    """Tráo đổi thứ tự đáp án và cập nhật đáp án đúng (KHÔNG sửa đổi giải thích)"""
     options = question["options"]
     option_keys = list(options.keys())
     option_values = list(options.values())
@@ -839,37 +840,11 @@ def shuffle_question_options(question):
     original_correct = question["correct"]
     new_correct = old_to_new[original_correct]
     
-    # Cập nhật giải thích: thay thế tham chiếu đến đáp án gốc bằng đáp án mới
-    explanation = question["explanation"]
-    
-    # Thay thế các tham chiếu đến đáp án gốc trong giải thích
-    # Chỉ thay thế khi giải thích có đề cập đến đáp án cụ thể
-    if "Answer" in explanation or "answer" in explanation or "option" in explanation.lower():
-        # Thay thế từng đáp án
-        for old_key, new_key in old_to_new.items():
-            # Thay thế các mẫu thường gặp: "Answer A", "Option A", "A is correct", v.v.
-            patterns = [
-                f"Answer {old_key}",
-                f"answer {old_key}",
-                f"Option {old_key}",
-                f"option {old_key}",
-                f"{old_key} is correct",
-                f"{old_key} is the correct",
-                f"correct answer is {old_key}",
-                f"correct option is {old_key}",
-                f"choose {old_key}",
-                f"select {old_key}"
-            ]
-            
-            for pattern in patterns:
-                if pattern in explanation:
-                    explanation = explanation.replace(pattern, pattern.replace(old_key, new_key))
-    
     return {
         **question,
         "options": new_options,
         "correct": new_correct,
-        "explanation": explanation,
+        "explanation": question["explanation"],  # Giữ nguyên giải thích
         "original_correct": original_correct,
         "mapping": new_to_old
     }
@@ -1037,11 +1012,23 @@ if selected_exam:
                 # Hiển thị giải thích nếu được chọn
                 if show_explanation:
                     with st.expander(f"Xem giải thích câu {i}"):
-                        st.info(f"**Đáp án đúng:** {q['correct']}")
+                        # Hiển thị đáp án đúng trong đề này
+                        st.info(f"**Đáp án đúng trong đề này:** {q['correct']}")
+                        
+                        # Hiển thị nội dung đáp án đúng
+                        correct_content = q['options'][q['correct']]
+                        st.write(f"**Nội dung đáp án đúng:** {correct_content}")
+                        
                         st.write(f"**Giải thích:** {q['explanation']}")
-                        # Hiển thị thông tin tham khảo về đáp án gốc
+                        
+                        # Hiển thị thông tin ánh xạ nếu cần
                         if q.get('original_correct') and q['original_correct'] != q['correct']:
-                            st.caption(f"*Lưu ý: Trong đề gốc, đáp án đúng là {q['original_correct']}*")
+                            # Tìm nội dung đáp án gốc
+                            mapping = q.get('mapping', {})
+                            if mapping:
+                                original_key = mapping.get(q['correct'])
+                                if original_key:
+                                    st.caption(f"*Trong đề gốc, đáp án này tương ứng với đáp án {original_key}*")
                 
                 st.markdown("---")
     
@@ -1092,9 +1079,18 @@ if selected_exam:
             # Hiển thị giải thích
             if show_explanation:
                 st.info(f"**Giải thích:** {q['explanation']}")
-                # Hiển thị thông tin tham khảo về đáp án gốc
+                
+                # Hiển thị nội dung đáp án đúng
+                correct_content = q['options'][q['correct']]
+                st.write(f"**Nội dung đáp án đúng:** {correct_content}")
+                
+                # Hiển thị thông tin ánh xạ nếu cần
                 if q.get('original_correct') and q['original_correct'] != q['correct']:
-                    st.caption(f"*Lưu ý: Trong đề gốc, đáp án đúng là {q['original_correct']}*")
+                    mapping = q.get('mapping', {})
+                    if mapping:
+                        original_key = mapping.get(q['correct'])
+                        if original_key:
+                            st.caption(f"*Trong đề gốc, đáp án này tương ứng với đáp án {original_key}*")
 
 # ========== THỐNG KÊ ==========
 st.sidebar.header("📊 Thống kê")
@@ -1137,8 +1133,8 @@ st.sidebar.info("""
 
 **Lưu ý:**
 - Đáp án đã được tráo đổi ngẫu nhiên trong mỗi đề
-- Giải thích đã được cập nhật để khớp với đáp án trong đề đã tráo
-- Có thể xem đáp án gốc trong phần giải thích nếu cần
+- Giải thích vẫn tham chiếu đến cấu trúc ngữ pháp/ý nghĩa của câu hỏi
+- Hiển thị cả nội dung đáp án đúng để dễ theo dõi
 """)
 
 st.markdown("---")
